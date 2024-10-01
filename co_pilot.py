@@ -13,7 +13,7 @@ app = FastAPI()
 
 # OpenAI and Anthropic API keys
 import os
-os.environ['REQUESTS_CA_BUNDLE'] = r"C:\Users\nikhils\Downloads\Zscaler Root CA.crt"
+# os.environ['REQUESTS_CA_BUNDLE'] = r"C:\Users\nikhils\Downloads\Zscaler Root CA.crt"
 # os.environ["OPENAI_API_KEY"] = openai_key
 openai_key = os.environ["OPENAI_API_KEY"] 
 def analyze_image_openai(base64_image):
