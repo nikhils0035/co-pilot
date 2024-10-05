@@ -96,7 +96,7 @@ import requests
 def main():
     st.set_page_config(page_title="LineCraft Co-pilot", layout="wide")
 
-    col1, col2 = st.columns([1, 7])
+    col1, col2 = st.columns([1, 6])
 
     with col1:
         st.image("https://cdn.prod.website-files.com/6667f48b2cd0ba5f5cdd53f3/666809c74e0bdb84a7b0f02a_linecraft-logo.svg", width=150)
