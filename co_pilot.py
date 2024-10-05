@@ -8,13 +8,13 @@ from io import BytesIO
 from PIL import Image
 import io
 import os
-import time
 
 # Initialize FastAPI app
 app = FastAPI()
 
 # OpenAI API key
 openai_key = os.environ["OPENAI_API_KEY"]
+
 def analyze_image_openai(base64_image):
     headers = {
         "Content-Type": "application/json",
@@ -89,12 +89,14 @@ async def analyze_image(file: UploadFile = File(...)):
     openai_analysis = analyze_image_openai(base64_image)
     return {"openai_analysis": openai_analysis}
 
-
+import streamlit as st
+import time
+import requests
 
 def main():
     st.set_page_config(page_title="LineCraft Co-pilot", layout="wide")
 
-    col1, col2 = st.columns([1, 6])
+    col1, col2 = st.columns([1, 3])
 
     with col1:
         st.image("https://cdn.prod.website-files.com/6667f48b2cd0ba5f5cdd53f3/666809c74e0bdb84a7b0f02a_linecraft-logo.svg", width=150)
@@ -103,11 +105,12 @@ def main():
         st.title("LineCraft Co-pilot")
 
     # Clear conversation button
-    # if st.button("Clear Conversation"):
-    #     st.session_state['messages'] = []
-    #     st.session_state['initial_analysis_done'] = False  # Reset analysis state
+    if st.button("Clear Conversation"):
+        st.session_state['messages'] = []
+        st.session_state['initial_analysis_done'] = False  # Reset analysis state
+        st.rerun()  # Rerun the script to refresh the UI
 
-    # Initialize session states for messages and analysis flag
+    # Initialize session states for messages and analysis flag if not already done
     if 'messages' not in st.session_state:
         st.session_state['messages'] = []
 
@@ -157,6 +160,14 @@ def main():
         with st.chat_message("user"):
             st.write(user_query)
 
+        # Create a placeholder for the assistant response
+        assistant_placeholder = st.empty()
+
+        # Display typing indicator while waiting for response
+        with assistant_placeholder.chat_message("assistant"):
+            typing_placeholder = st.empty()
+            typing_placeholder.write("Linecraft co-pilot is typing...")
+
         # Prepare context for OpenAI analysis including previous messages
         context_messages = [{"role": msg["role"], "content": msg["content"]} for msg in st.session_state['messages']]
 
@@ -179,26 +190,25 @@ def main():
             "Authorization": f"Bearer {openai_key}"
         }
 
-        # Show "Assistant is typing..." and wait for the response
-        with st.chat_message("assistant"):
-            typing_message = st.empty()  # Create an empty placeholder for typing message
-            typing_message.write("Linecraft Co-pilot is typing...")  # Show typing indicator
+        # Simulate typing delay (optional)
+        time.sleep(2)
 
-            # Simulate delay to create the "typing" effect
-            time.sleep(2)  # You can adjust this duration if necessary
+        # Make the API call
+        response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
+        ai_response = response.json()['choices'][0]['message']['content']
 
-            response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
-            ai_response = response.json()['choices'][0]['message']['content']
+        # Replace typing placeholder with the actual response (no fading away of the old response)
+        assistant_placeholder.empty()  # Clear the placeholder
 
-            # Clear typing message and show the actual response
-            typing_message.empty()  # Clear typing message
-            st.write(ai_response)  # Show the AI response
-
-        # Add the AI response to the session state
+        # Add the AI response to the session state for conversation history
         st.session_state['messages'].append({
             "role": "assistant",
             "content": ai_response
         })
+
+        # Display the AI response in a new message
+        with st.chat_message("assistant"):
+            st.write(ai_response)
 
 if __name__ == "__main__":
     main()
