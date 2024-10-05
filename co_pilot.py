@@ -182,7 +182,7 @@ def main():
         # Show "Assistant is typing..." and wait for the response
         with st.chat_message("assistant"):
             typing_message = st.empty()  # Create an empty placeholder for typing message
-            typing_message.write("LineCraft is typing...")  # Show typing indicator
+            typing_message.write("Linecraft Co-pilot is typing...")  # Show typing indicator
 
             # Simulate delay to create the "typing" effect
             time.sleep(2)  # You can adjust this duration if necessary
