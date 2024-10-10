@@ -172,11 +172,8 @@ def main():
         context_messages = [{"role": msg["role"], "content": msg["content"]} for msg in st.session_state['messages']]
 
         # Modify the prompt to check for relevance
-        relevance_check_prompt = f"""
-        Based on the graph analysis provided earlier, determine if the following question is relevant to the graph or off-topic: 
-        "{user_query}". If it is relevant, provide an appropriate response based on the graph analysis. 
-        If it is off-topic, simply respond with "Your question is not related to the graph analysis." 
-        Don't say anything about question relevance if the graph is not off-topic, simply respond with the answer.
+        relevance_check_prompt = f""" 
+        {user_query}
         """
 
         payload = {
