@@ -46,7 +46,7 @@ def analyze_image_openai(base64_image):
             - Feel free to provide supporting numbers, etc.
             - Strictly do not include any recommendations and/or implications based on the data.
 
-            Generate the output in a concise format of 2-4 short paragraphs.
+            Generate the output in a concise format of 2-4 short paragraphs.Ensure that all important points are clearly highlighted in your output.
             """
         }
     ]
