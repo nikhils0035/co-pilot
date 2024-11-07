@@ -239,7 +239,7 @@ def main():
         st.session_state['messages'].append({
             "role": "user",
             "content": "Uploaded an image for analysis.",
-            "image": uploaded_file
+            "image": base64_image
         })
         
         st.session_state['messages'].append({
