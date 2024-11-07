@@ -44,7 +44,6 @@ def analyze_image_openai(base64_image):
             - If the graph is a scatter plot, describe the relationship between the two variables, noting any correlation and its implications.
             - Feel free to use variance, outliers, similarities, trends, comparisons to better understand the context.
             - Feel free to provide supporting numbers, etc.
-            - Strictly do not include any recommendations and/or implications based on the data.
 
             Generate the output in a concise format of 2-4 short paragraphs.Ensure that all important points are clearly highlighted in your output.
             """
