@@ -89,27 +89,100 @@ async def analyze_image(file: UploadFile = File(...)):
     openai_analysis = analyze_image_openai(base64_image)
     return {"openai_analysis": openai_analysis}
 
+
 import streamlit as st
 import time
 import requests
 
+def set_custom_css():
+    st.markdown("""
+        <style>
+        /* Dark theme styles */
+        .stApp {
+            background-color: #1a1a1a;
+            color: white;
+        }
+        
+        /* Header styles */
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            margin-bottom: 2rem;
+        }
+        
+        /* Logo styles */
+        .logo-container {
+            width: 150px;
+        }
+        
+        /* Title styles */
+        .title-container {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .co-pilot-title {
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .subtitle {
+            color: #9ca3af;
+            font-size: 1.2rem;
+        }
+        
+        .highlight {
+            color: #2dd4bf;
+        }
+        
+        /* Upload container styles */
+        .upload-container {
+            border: 2px dashed #4b5563;
+            border-radius: 0.5rem;
+            padding: 2rem;
+            text-align: center;
+            margin: 2rem auto;
+            max-width: 600px;
+        }
+        
+        .upload-icon {
+            color: #6b7280;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .upload-text {
+            color: #9ca3af;
+        }
+        
+        /* Hide default Streamlit elements */
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+
+        /* Custom button styles */
+        .stButton>button {
+            background-color: #2dd4bf;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+
+# Main function to handle the Streamlit app logic
 def main():
     st.set_page_config(page_title="LineCraft Co-pilot", layout="wide")
+    set_custom_css()
 
-    col1, col2 = st.columns([1, 6])
-
-    with col1:
-        st.image("https://cdn.prod.website-files.com/6667f48b2cd0ba5f5cdd53f3/666809c74e0bdb84a7b0f02a_linecraft-logo.svg", width=150)
-
-    with col2:
-        st.title("LineCraft Co-pilot")
-
-    # Clear conversation button
-    if st.button("Clear Conversation"):
-        st.session_state['messages'] = []
-        st.session_state['initial_analysis_done'] = False  # Reset analysis state
-        st.rerun()  # Rerun the script to refresh the UI
-
+    # Sidebar for chat summary
+    st.sidebar.header("Chat Summary")
+    
     # Initialize session states for messages and analysis flag if not already done
     if 'messages' not in st.session_state:
         st.session_state['messages'] = []
@@ -117,14 +190,45 @@ def main():
     if 'initial_analysis_done' not in st.session_state:
         st.session_state['initial_analysis_done'] = False
 
-    # File uploader
-    uploaded_file = st.file_uploader("Upload a graph", type=["jpg", "jpeg", "png", "bmp", "tiff"], label_visibility="collapsed")
+    # Display the conversation summary in the sidebar
+    def update_sidebar_summary():
+        with st.sidebar:
+            if st.session_state['messages']:
+                st.write("Conversation so far:")
+                for i, message in enumerate(st.session_state['messages']):
+                    role = "User" if message["role"] == "user" else "Co-pilot"
+                    
+                    # Truncate assistant's message in the summary (set to 100 characters, for example)
+                    truncated_content = message["content"][:200] + "..." if len(message["content"]) > 100 else message["content"]
+                    
+                    st.write(f"{role}: {truncated_content}")
+
+    col1, col2, col3 = st.columns([1, 4, 1])
+
+    with col1:
+        st.image("https://raw.githubusercontent.com/nikhils0035/co-pilot/refs/heads/main/1.svg", width=150)
+
+    with col3:
+        st.markdown('<a href="https://linecraft.ai" target="_blank" style="color: white; text-decoration: none;">Visit Our Website &#x2197;</a>', unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="title-container" style="text-align: center; display: flex; justify-content: center; align-items: center; width: 100%; margin-bottom: 0;">
+        <img src="https://raw.githubusercontent.com/nikhils0035/co-pilot/refs/heads/main/CoPilot%20Icon.svg" alt="icon" style="width: 40px; height: 40px; margin-right: 10px;">
+        <h1 class="co-pilot-title" style="margin: 0; font-size: 28px;">Co-Pilot</h1>
+    </div>
+    <p class="subtitle" style="text-align: center; margin-top: 0;">
+        Your data is smarter than you think. Turn 
+        <span class="highlight">charts into chats</span> 
+        with the Linecraft AI Co-Pilot.
+    </p>
+    """, unsafe_allow_html=True)
+
+    uploaded_file = st.file_uploader("Upload a graph", type=["jpg", "jpeg", "png", "bmp", "tiff"], label_visibility="hidden")
 
     if uploaded_file is not None and not st.session_state['initial_analysis_done']:
         base64_image = encode_image(uploaded_file)
         openai_analysis = analyze_image_openai(base64_image)
 
-        # Append user message for image upload and assistant message for analysis
         st.session_state['messages'].append({
             "role": "user",
             "content": "Uploaded an image for analysis.",
@@ -136,42 +240,35 @@ def main():
             "content": openai_analysis
         })
 
-        # Set flag to avoid repeating initial analysis
         st.session_state['initial_analysis_done'] = True
+        update_sidebar_summary()  # Update the sidebar immediately after response
 
-    # Display the entire conversation history
+    # Display the conversation
     for message in st.session_state['messages']:
         with st.chat_message(message["role"]):
             if "image" in message:
                 st.image(message["image"], width=400)
             st.write(message["content"])
 
-    # User query input for follow-up question
     user_query = st.chat_input("Ask a follow-up question about the graph...")
 
     if user_query:
-        # Add the user query to the session state for conversation history
         st.session_state['messages'].append({
             "role": "user",
             "content": user_query
         })
 
-        # Display user query immediately
         with st.chat_message("user"):
             st.write(user_query)
 
-        # Create a placeholder for the assistant response
         assistant_placeholder = st.empty()
 
-        # Display typing indicator while waiting for response
         with assistant_placeholder.chat_message("assistant"):
             typing_placeholder = st.empty()
             typing_placeholder.write("Linecraft co-pilot is typing...")
 
-        # Prepare context for OpenAI analysis including previous messages
         context_messages = [{"role": msg["role"], "content": msg["content"]} for msg in st.session_state['messages']]
 
-        # Modify the prompt to check for relevance
         relevance_check_prompt = f""" 
         {user_query}
         """
@@ -187,25 +284,22 @@ def main():
             "Authorization": f"Bearer {openai_key}"
         }
 
-        # Simulate typing delay (optional)
         time.sleep(2)
 
-        # Make the API call
         response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
         ai_response = response.json()['choices'][0]['message']['content']
 
-        # Replace typing placeholder with the actual response (no fading away of the old response)
-        assistant_placeholder.empty()  # Clear the placeholder
+        assistant_placeholder.empty()
 
-        # Add the AI response to the session state for conversation history
         st.session_state['messages'].append({
             "role": "assistant",
             "content": ai_response
         })
 
-        # Display the AI response in a new message
         with st.chat_message("assistant"):
             st.write(ai_response)
+
+        update_sidebar_summary()  # Update the sidebar immediately after assistant's response
 
 if __name__ == "__main__":
     main()
