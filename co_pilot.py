@@ -89,7 +89,6 @@ async def analyze_image(file: UploadFile = File(...)):
     openai_analysis = analyze_image_openai(base64_image)
     return {"openai_analysis": openai_analysis}
 
-
 import streamlit as st
 import time
 import requests
@@ -196,12 +195,12 @@ def main():
             if st.session_state['messages']:
                 st.write("Conversation so far:")
                 for i, message in enumerate(st.session_state['messages']):
-                    role = "User" if message["role"] == "user" else "Co-pilot"
-                    
-                    # Truncate assistant's message in the summary (set to 100 characters, for example)
-                    truncated_content = message["content"][:200] + "..." if len(message["content"]) > 100 else message["content"]
-                    
-                    st.write(f"{role}: {truncated_content}")
+                    # Only display messages from the Co-pilot (assistant)
+                    if message["role"] == "assistant":
+                        # Truncate assistant's message in the summary (set to 100 characters, for example)
+                        truncated_content = message["content"][:100] + "..." if len(message["content"]) > 100 else message["content"]
+                        
+                        st.write(f"{truncated_content}")
 
     col1, col2, col3 = st.columns([1, 4, 1])
 
@@ -209,9 +208,17 @@ def main():
         st.image("https://raw.githubusercontent.com/nikhils0035/co-pilot/refs/heads/main/1.svg", width=150)
 
     with col3:
-        st.markdown('<a href="https://linecraft.ai" target="_blank" style="color: white; text-decoration: none;">Visit Our Website &#x2197;</a>', unsafe_allow_html=True)
+        st.markdown(
+        '''
+        <div style="display: flex; align-items: center; justify-content: center; height: 100%; text-align: center;">
+            <br><br><br><br> <!-- Added multiple line breaks to increase space -->
+            <a href="https://linecraft.ai" target="_blank" style="color: white; text-decoration: none;">  Visit Our Website &#x2197;</a>
+        </div>
+        ''',
+        unsafe_allow_html=True
+    )
 
-    st.markdown("""
+    st.markdown(""" 
     <div class="title-container" style="text-align: center; display: flex; justify-content: center; align-items: center; width: 100%; margin-bottom: 0;">
         <img src="https://raw.githubusercontent.com/nikhils0035/co-pilot/refs/heads/main/CoPilot%20Icon.svg" alt="icon" style="width: 40px; height: 40px; margin-right: 10px;">
         <h1 class="co-pilot-title" style="margin: 0; font-size: 28px;">Co-Pilot</h1>
@@ -250,56 +257,58 @@ def main():
                 st.image(message["image"], width=400)
             st.write(message["content"])
 
-    user_query = st.chat_input("Ask a follow-up question about the graph...")
+    # Show the follow-up question input only after the first assistant response
+    if st.session_state['initial_analysis_done']:
+        user_query = st.chat_input("Ask a follow-up question about the graph...")
 
-    if user_query:
-        st.session_state['messages'].append({
-            "role": "user",
-            "content": user_query
-        })
+        if user_query:
+            st.session_state['messages'].append({
+                "role": "user",
+                "content": user_query
+            })
 
-        with st.chat_message("user"):
-            st.write(user_query)
+            with st.chat_message("user"):
+                st.write(user_query)
 
-        assistant_placeholder = st.empty()
+            assistant_placeholder = st.empty()
 
-        with assistant_placeholder.chat_message("assistant"):
-            typing_placeholder = st.empty()
-            typing_placeholder.write("Linecraft co-pilot is typing...")
+            with assistant_placeholder.chat_message("assistant"):
+                typing_placeholder = st.empty()
+                typing_placeholder.write("Linecraft co-pilot is typing...")
 
-        context_messages = [{"role": msg["role"], "content": msg["content"]} for msg in st.session_state['messages']]
+            context_messages = [{"role": msg["role"], "content": msg["content"]} for msg in st.session_state['messages']]
 
-        relevance_check_prompt = f""" 
-        {user_query}
-        """
+            relevance_check_prompt = f""" 
+            {user_query}
+            """
 
-        payload = {
-            "model": "gpt-4o",
-            "messages": context_messages + [{"role": "user", "content": relevance_check_prompt}],
-            "max_tokens": 1024
-        }
+            payload = {
+                "model": "gpt-4o",
+                "messages": context_messages + [{"role": "user", "content": relevance_check_prompt}],
+                "max_tokens": 1024
+            }
 
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {openai_key}"
-        }
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {openai_key}"
+            }
 
-        time.sleep(2)
+            time.sleep(2)
 
-        response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
-        ai_response = response.json()['choices'][0]['message']['content']
+            response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
+            ai_response = response.json()['choices'][0]['message']['content']
 
-        assistant_placeholder.empty()
+            assistant_placeholder.empty()
 
-        st.session_state['messages'].append({
-            "role": "assistant",
-            "content": ai_response
-        })
+            st.session_state['messages'].append({
+                "role": "assistant",
+                "content": ai_response
+            })
 
-        with st.chat_message("assistant"):
-            st.write(ai_response)
+            with st.chat_message("assistant"):
+                st.write(ai_response)
 
-        update_sidebar_summary()  # Update the sidebar immediately after assistant's response
+            update_sidebar_summary()  # Update the sidebar immediately after assistant's response
 
 if __name__ == "__main__":
     main()
