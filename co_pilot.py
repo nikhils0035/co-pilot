@@ -11,8 +11,6 @@ import os
 
 # Initialize FastAPI app
 app = FastAPI()
-
-# OpenAI API key
 openai_key = os.environ["OPENAI_API_KEY"]
 
 def analyze_image_openai(base64_image):
@@ -44,6 +42,7 @@ def analyze_image_openai(base64_image):
             - If the graph is a scatter plot, describe the relationship between the two variables, noting any correlation and its implications.
             - Feel free to use variance, outliers, similarities, trends, comparisons to better understand the context.
             - Feel free to provide supporting numbers, etc.
+            - In the output highlight specific data points that helps making insights useful 
 
             Generate the output in a concise format of 2-4 short paragraphs.Ensure that all important points are clearly highlighted in your output.
             """
@@ -79,6 +78,10 @@ def convert_to_jpeg(image_file):
 def encode_image(image_file):
     jpeg_image = convert_to_jpeg(image_file)
     return base64.b64encode(jpeg_image.read()).decode('utf-8')
+
+def decode_image(base64_image):
+    image_data = base64.b64decode(base64_image)
+    return Image.open(io.BytesIO(image_data))
 
 @app.post("/analyze")
 async def analyze_image(file: UploadFile = File(...)):
@@ -238,7 +241,7 @@ def main():
         st.session_state['messages'].append({
             "role": "user",
             "content": "Uploaded an image for analysis.",
-            "image": uploaded_file
+            "image": base64_image
         })
         
         st.session_state['messages'].append({
@@ -253,7 +256,7 @@ def main():
     for message in st.session_state['messages']:
         with st.chat_message(message["role"]):
             if "image" in message:
-                st.image(message["image"], width=400)
+                st.image(decode_image(message["image"]), width=400)
             st.write(message["content"])
 
     # Show the follow-up question input only after the first assistant response
@@ -277,14 +280,31 @@ def main():
 
             context_messages = [{"role": msg["role"], "content": msg["content"]} for msg in st.session_state['messages']]
 
-            relevance_check_prompt = f""" 
-            {user_query}
+            base64_image = encode_image(uploaded_file)
+            relevance_check_prompt = f"""Answer the given user query based on previous response and graph uploaded
+            User query:"{user_query}"
+            In the output highlight specific data points that helps making insights useful .
             """
 
             payload = {
                 "model": "gpt-4o",
-                "messages": context_messages + [{"role": "user", "content": relevance_check_prompt}],
-                "max_tokens": 1024
+                "messages": context_messages + [
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": relevance_check_prompt
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/jpeg;base64,{base64_image}"
+                        }
+                    }
+                ]
+            }
+        ],"max_tokens": 1024
             }
 
             headers = {
