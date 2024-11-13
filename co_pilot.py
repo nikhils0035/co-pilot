@@ -11,6 +11,7 @@ import os
 
 # Initialize FastAPI app
 app = FastAPI()
+
 openai_key = os.environ["OPENAI_API_KEY"]
 
 def analyze_image_openai(base64_image):
@@ -42,9 +43,9 @@ def analyze_image_openai(base64_image):
             - If the graph is a scatter plot, describe the relationship between the two variables, noting any correlation and its implications.
             - Feel free to use variance, outliers, similarities, trends, comparisons to better understand the context.
             - Feel free to provide supporting numbers, etc.
-            - In the output highlight specific data points that helps making insights useful 
+    
 
-            Generate the output in a concise format of 2-4 short paragraphs.Ensure that all important points are clearly highlighted in your output.
+            Generate the output in a concise format of 2-4 short paragraphs.Highlight important numbers using bold, italic.Include a section "Top 3 Important questions and answers:".
             """
         }
     ]
@@ -214,7 +215,7 @@ def main():
         '''
         <div style="display: flex; align-items: center; justify-content: center; height: 100%; text-align: center;">
             <br><br><br><br> <!-- Added multiple line breaks to increase space -->
-            <a href="https://linecraft.ai" target="_blank" style="color: white; text-decoration: none;">Visit Our Website &#x2197;</a>
+            <a href="https://co-pilot-linecraft.streamlit.app/" target="_blank" style="color: white; text-decoration: none;">New Chat &#x2197;</a>
         </div>
         ''',
         unsafe_allow_html=True
