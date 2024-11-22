@@ -12,7 +12,7 @@ import os
 # Initialize FastAPI app
 app = FastAPI()
 
-openai_key = os.environ["OPENAI_API_KEY"]
+openai_key = os.environ["OPENAI_API_KEY"] 
 
 def analyze_image_openai(base64_image):
     headers = {
@@ -101,7 +101,7 @@ def set_custom_css():
         <style>
         /* Dark theme styles */
         .stApp {
-            background-color: #1a1a1a;
+            background-color: #5D00FF;
             color: white;
         }
         
@@ -183,7 +183,7 @@ def main():
     set_custom_css()
 
     # Sidebar for chat summary
-    st.sidebar.header("Chat Summary")
+    # st.sidebar.header("Chat Summary")
     
     # Initialize session states for messages and analysis flag if not already done
     if 'messages' not in st.session_state:
@@ -193,17 +193,17 @@ def main():
         st.session_state['initial_analysis_done'] = False
 
     # Display the conversation summary in the sidebar
-    def update_sidebar_summary():
-        with st.sidebar:
-            if st.session_state['messages']:
-                st.write("Conversation so far:")
-                for i, message in enumerate(st.session_state['messages']):
-                    # Only display messages from the Co-pilot (assistant)
-                    if message["role"] == "assistant":
-                        # Truncate assistant's message in the summary (set to 100 characters, for example)
-                        truncated_content = message["content"][:100] + "..." if len(message["content"]) > 100 else message["content"]
+    # def update_sidebar_summary():
+    #     with st.sidebar:
+    #         if st.session_state['messages']:
+    #             st.write("Conversation so far:")
+    #             for i, message in enumerate(st.session_state['messages']):
+    #                 # Only display messages from the Co-pilot (assistant)
+    #                 if message["role"] == "assistant":
+    #                     # Truncate assistant's message in the summary (set to 100 characters, for example)
+    #                     truncated_content = message["content"][:100] + "..." if len(message["content"]) > 100 else message["content"]
                         
-                        st.write(f"{truncated_content}")
+    #                     st.write(f"{truncated_content}")
 
     col1, col2, col3 = st.columns([1, 4, 1])
 
@@ -251,7 +251,7 @@ def main():
         })
 
         st.session_state['initial_analysis_done'] = True
-        update_sidebar_summary()  # Update the sidebar immediately after response
+        # update_sidebar_summary()  # Update the sidebar immediately after response
 
     # Display the conversation
     for message in st.session_state['messages']:
@@ -328,7 +328,7 @@ def main():
             with st.chat_message("assistant"):
                 st.write(ai_response)
 
-            update_sidebar_summary()  # Update the sidebar immediately after assistant's response
+            # update_sidebar_summary()  # Update the sidebar immediately after assistant's response
 
 if __name__ == "__main__":
     main()
