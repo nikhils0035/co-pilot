@@ -202,21 +202,20 @@ def set_name(name):
 def display_suggestions(suggestions):
     """Render suggestion buttons."""
     
-    st.markdown("""
-    <style>
-    .stButton>button {
-        font-size: 10px;
-        width: 200px;
-        height: 100px;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+    # st.markdown("""
+    # <style>
+    # .stButton>button {
+    #     font-size: 10px;
+    #     width: 200px;
+    #     height: 100px;
+    # }
+    # </style>
+    # """, unsafe_allow_html=True)
     if suggestions:
         # st.markdown("### Suggestions:")
         cols = st.columns(len(suggestions))
         for i, suggestion in enumerate(suggestions):
             if cols[i].button(suggestion, key=i, on_click=set_name, args=[suggestion]):
-                print('ues')
                 st.session_state['button_state']=suggestion
 
 # Main function to handle the Streamlit app logic
@@ -225,7 +224,7 @@ def main():
     set_custom_css()
 
     # Sidebar for chat summary
-    st.sidebar.header("Chat Summary")
+    # st.sidebar.header("Chat Summary")
 
     if 'suggestions' not in st.session_state:
         st.session_state['suggestions'] = []
@@ -235,6 +234,9 @@ def main():
 
     if 'suggestion_state' not in st.session_state:
         st.session_state['suggestion_state'] = None
+    
+    if 'uploaded_file' not in st.session_state:
+        st.session_state['uploaded_file'] = None
 
     # Initialize session states for messages and analysis flag if not already done
     if 'messages' not in st.session_state:
@@ -244,17 +246,16 @@ def main():
         st.session_state['initial_analysis_done'] = False
 
     # Display the conversation summary in the sidebar
-    def update_sidebar_summary():
-        with st.sidebar:
-            if st.session_state['messages']:
-                st.write("Conversation so far:")
-                for i, message in enumerate(st.session_state['messages']):
-                    # Only display messages from the Co-pilot (assistant)
-                    if message["role"] == "assistant":
-                        # Truncate assistant's message in the summary (set to 100 characters, for example)
-                        truncated_content = message["content"][:100] + "..." if len(message["content"]) > 100 else message["content"]
-                        
-                        st.write(f"{truncated_content}")
+    # def update_sidebar_summary():
+    #     with st.sidebar:
+    #         if st.session_state['messages']:
+    #             st.write("Conversation so far:")
+    #             for i, message in enumerate(st.session_state['messages']):
+    #                 # Only display messages from the Co-pilot (assistant)
+    #                 if message["role"] == "assistant":
+    #                     # Truncate assistant's message in the summary (set to 100 characters, for example)
+    #                     truncated_content = message["content"][:100] + "..." if len(message["content"]) > 100 else message["content"]
+    #                     st.write(f"{truncated_content}")
 
     col1, col2, col3 = st.columns([1, 4, 1])
 
@@ -286,6 +287,33 @@ def main():
 
     uploaded_file = st.file_uploader("Upload a graph", type=["jpg", "jpeg", "png", "bmp", "tiff"], label_visibility="hidden")
 
+    col1, col2, col3 = st.columns([1, 6, 1])
+
+    with col1:
+        # with example_col:
+        try_example1 = st.button("Try Example 1", key="Example 1")
+        if try_example1:
+            example_image_path = "https://drive.usercontent.google.com/download?id=1uoWA7OsKXKiHmorBFvgdwcgKHCNFPLVA&export=view&authuser=1"
+            response = requests.get(example_image_path)
+            if response.status_code == 200:
+                uploaded_file = BytesIO(response.content)
+                # uploaded_file = convert_to_uploaded_file(BytesIO(response.content), name="example.jpg", type="image/jpeg")
+                st.session_state['initial_analysis_done'] = False
+                st.session_state['uploaded_file'] = uploaded_file
+    with col2:
+        try_example2 = st.button("Try Example 2", key="Example 2")
+        if try_example2:
+            example_image_path = "https://drive.usercontent.google.com/download?id=1hEm-uBFWULmvVw3KvvL_0LME-mgG2QC5&export=view&authuser=1"
+            response = requests.get(example_image_path)
+            if response.status_code == 200:
+                uploaded_file = BytesIO(response.content)
+                # uploaded_file = convert_to_uploaded_file(BytesIO(response.content), name="example.jpg", type="image/jpeg")
+                st.session_state['initial_analysis_done'] = False
+                st.session_state['uploaded_file'] = uploaded_file
+
+    if st.session_state['uploaded_file']:
+        uploaded_file = st.session_state['uploaded_file']
+
     if uploaded_file is not None and not st.session_state['initial_analysis_done']:
         base64_image = encode_image(uploaded_file)
         openai_analysis = analyze_image_openai(base64_image)
@@ -302,7 +330,7 @@ def main():
         })
 
         st.session_state['initial_analysis_done'] = True
-        update_sidebar_summary()  # Update the sidebar immediately after response
+        # update_sidebar_summary()  # Update the sidebar immediately after response
 
     # Display the conversation
     for message in st.session_state['messages']:
@@ -326,7 +354,7 @@ def main():
             display_suggestions(suggestions)
             st.session_state['suggestion_state'] = "Done"
 
-        update_sidebar_summary()
+        # update_sidebar_summary()
         user_query = st.chat_input("Ask a follow-up question about the graph...")
 
         if st.session_state.button_state:
@@ -349,7 +377,6 @@ def main():
                 typing_placeholder.write("Linecraft co-pilot is typing...")
 
             context_messages = [{"role": msg["role"], "content": msg["content"]} for msg in st.session_state['messages']]
-
             base64_image = encode_image(uploaded_file)
             relevance_check_prompt = f"""Answer the given user query based on previous response and graph uploaded
             User query:"{user_query}"
@@ -407,7 +434,7 @@ def main():
             display_suggestions(suggestions)
             # st.session_state['suggestion_state'] = "Done"
             # display_suggestions(suggestions)
-            update_sidebar_summary()  # Update the sidebar immediately after assistant's response
+            # update_sidebar_summary()  # Update the sidebar immediately after assistant's response
 
 if __name__ == "__main__":
     main()
