@@ -8,11 +8,12 @@ from io import BytesIO
 from PIL import Image
 import io
 import os
+import json
 
 # Initialize FastAPI app
 app = FastAPI()
 
-openai_key = os.environ["OPENAI_API_KEY"]
+openai_key = os.environ['OPENAI_API_KEY']
 
 def analyze_image_openai(base64_image):
     headers = {
@@ -45,7 +46,7 @@ def analyze_image_openai(base64_image):
             - Feel free to provide supporting numbers, etc.
     
 
-            Generate the output in a concise format of 2-4 short paragraphs.Highlight important numbers using bold, italic.Include a section "Top 3 Important questions and answers:".
+            Generate the output in a concise format of 2-4 short paragraphs.Highlight important numbers using bold, italic.".
             """
         }
     ]
@@ -61,6 +62,25 @@ def analyze_image_openai(base64_image):
         "max_tokens": 1024
     }
 
+    response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
+    return response.json()['choices'][0]['message']['content']
+
+def generate_suggestion(messages):
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {openai_key}"
+    }
+
+    messages.append({
+            "role": "user",
+            "content": "Strictly give the response only in JSON format containing a list of 4 questions based on the image. Sample response: '{'questions':['What is the image?']}'.Strictly enforce the json format without any descriptions"
+        })
+
+    payload = {
+        "model": "gpt-4o",
+        "messages": messages,
+        "max_tokens": 1024
+    }
     response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
     return response.json()['choices'][0]['message']['content']
 
@@ -176,6 +196,28 @@ def set_custom_css():
         </style>
     """, unsafe_allow_html=True)
 
+def set_name(name):
+    st.session_state.button_state = name
+    
+def display_suggestions(suggestions):
+    """Render suggestion buttons."""
+    
+    st.markdown("""
+    <style>
+    .stButton>button {
+        font-size: 10px;
+        width: 200px;
+        height: 100px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    if suggestions:
+        # st.markdown("### Suggestions:")
+        cols = st.columns(len(suggestions))
+        for i, suggestion in enumerate(suggestions):
+            if cols[i].button(suggestion, key=i, on_click=set_name, args=[suggestion]):
+                print('ues')
+                st.session_state['button_state']=suggestion
 
 # Main function to handle the Streamlit app logic
 def main():
@@ -184,7 +226,16 @@ def main():
 
     # Sidebar for chat summary
     st.sidebar.header("Chat Summary")
-    
+
+    if 'suggestions' not in st.session_state:
+        st.session_state['suggestions'] = []
+
+    if 'button_state' not in st.session_state:
+        st.session_state['button_state'] = None
+
+    if 'suggestion_state' not in st.session_state:
+        st.session_state['suggestion_state'] = None
+
     # Initialize session states for messages and analysis flag if not already done
     if 'messages' not in st.session_state:
         st.session_state['messages'] = []
@@ -260,9 +311,27 @@ def main():
                 st.image(decode_image(message["image"]), width=400)
             st.write(message["content"])
 
+
     # Show the follow-up question input only after the first assistant response
     if st.session_state['initial_analysis_done']:
+
+        if not st.session_state['suggestion_state']:
+            suggestion_response = generate_suggestion(st.session_state['messages'].copy())
+            # print(suggestion_response[8:len(suggestion_response)-3])
+            if suggestion_response[0] != "{":
+                suggestion_dict = json.loads(suggestion_response[8:len(suggestion_response)-3])
+            else:
+                suggestion_dict = json.loads(suggestion_response)
+            suggestions = suggestion_dict["questions"]
+            display_suggestions(suggestions)
+            st.session_state['suggestion_state'] = "Done"
+
+        update_sidebar_summary()
         user_query = st.chat_input("Ask a follow-up question about the graph...")
+
+        if st.session_state.button_state:
+            user_query = st.session_state.button_state
+            st.session_state.button_state = None
 
         if user_query:
             st.session_state['messages'].append({
@@ -328,6 +397,16 @@ def main():
             with st.chat_message("assistant"):
                 st.write(ai_response)
 
+            suggestion_response = generate_suggestion(st.session_state['messages'].copy())
+            # print(suggestion_response[8:len(suggestion_response)-3])
+            if suggestion_response[0] != "{":
+                suggestion_dict = json.loads(suggestion_response[8:len(suggestion_response)-3])
+            else:
+                suggestion_dict = json.loads(suggestion_response)
+            suggestions = suggestion_dict["questions"]
+            display_suggestions(suggestions)
+            # st.session_state['suggestion_state'] = "Done"
+            # display_suggestions(suggestions)
             update_sidebar_summary()  # Update the sidebar immediately after assistant's response
 
 if __name__ == "__main__":
