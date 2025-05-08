@@ -293,7 +293,7 @@ def main():
         # with example_col:
         try_example1 = st.button("Try Example 1", key="Example 1")
         if try_example1:
-            example_image_path = "https://parirobotics-my.sharepoint.com/personal/nikhilshinde_linecraft_ai/_layouts/15/download.aspx?SourceUrl=https://parirobotics-my.sharepoint.com/personal/nikhilshinde_linecraft_ai/Documents/example1.png"
+            example_image_path = "https://drive.google.com/uc?export=download&id=1eIvWFmIbHnn0Obco7QUaQq3SMfGu_fGD"
             response = requests.get(example_image_path)
             if response.status_code == 200:
                 uploaded_file = BytesIO(response.content)
