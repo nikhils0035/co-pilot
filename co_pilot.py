@@ -303,7 +303,7 @@ def main():
     with col2:
         try_example2 = st.button("Try Example 2", key="Example 2")
         if try_example2:
-            example_image_path = "https://drive.usercontent.google.com/download?id=1hEm-uBFWULmvVw3KvvL_0LME-mgG2QC5&export=view&authuser=1"
+            example_image_path = "https://drive.google.com/uc?export=download&id=1aBT4HC3o-2syyZ3ewSBSRcJCAUjuMvpm"
             response = requests.get(example_image_path)
             if response.status_code == 200:
                 uploaded_file = BytesIO(response.content)
