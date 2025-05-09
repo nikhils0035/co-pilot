@@ -267,7 +267,7 @@ def main():
         '''
         <div style="display: flex; align-items: center; justify-content: center; height: 100%; text-align: center;">
             <br><br><br><br> <!-- Added multiple line breaks to increase space -->
-            <a href="https://co-pilot-linecraft.streamlit.app/" target="_blank" style="color: white; text-decoration: none;">New Chat &#x2197;</a>
+            <a href="https://linecraft-ai-copilot.streamlit.app/" target="_blank" style="color: white; text-decoration: none;">New Chat &#x2197;</a>
         </div>
         ''',
         unsafe_allow_html=True
